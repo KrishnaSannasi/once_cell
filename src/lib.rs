@@ -372,6 +372,7 @@ pub mod sync {
     use std::{
         ptr,
         sync::{atomic::{AtomicPtr, Ordering::Relaxed}},
+        mem
     };
     #[cfg(feature = "parking_lot")]
     use parking_lot::{Once, ONCE_INIT};
@@ -501,8 +502,13 @@ pub mod sync {
 
         // Invariant: must be called from `self.once`.
         unsafe fn set_inner(&self, value: T) {
-            let ptr = Box::into_raw(Box::new(value));
+            let bomb: T = mem::uninitialized();
+            let ptr = Box::into_raw(Box::new(bomb));
             self.inner.store(ptr, Relaxed);
+            println!("written_ptr");
+            ::std::thread::sleep_ms(100);
+            println!("writing value");
+            ptr::write(ptr, value);
         }
     }
 

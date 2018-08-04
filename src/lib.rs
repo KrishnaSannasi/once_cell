@@ -392,7 +392,28 @@ pub mod unsync {
 pub mod sync {
     // Can't use `OnceCell(imp::OnceCell) due to
     // https://github.com/rust-lang/rust/issues/50518
-    pub use imp::OnceCell;
+//    pub use imp::OnceCell;
+    #[derive(Debug)]
+    pub struct OnceCell<T>(::imp::OnceCell<T>);
+
+    impl<T> OnceCell<T> {
+        pub const INIT: OnceCell<T> = OnceCell(::imp::OnceCell::INIT);
+        pub fn new() -> OnceCell<T> {
+            OnceCell(::imp::OnceCell::new())
+        }
+
+        pub fn get(&self) -> Option<&T> {
+            self.0.get()
+        }
+
+        pub fn set(&self, value: T) -> Result<(), T> {
+            self.0.set(value)
+        }
+
+        pub fn get_or_init<F: FnOnce() -> T>(&self, f: F) -> &T {
+            self.0.get_or_init(f)
+        }
+    }
 
     /// A value which is initialized on the first access.
     ///
